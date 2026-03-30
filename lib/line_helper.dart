@@ -23,6 +23,7 @@ Map? drawAnimatedLine(
     Canvas canvas,
     AnimatedPointConnection connection,
     double radius,
+    double rotationX,
     double rotationY,
     double rotationZ,
     double animationValue,
@@ -30,9 +31,9 @@ Map? drawAnimatedLine(
     Offset? hoverPoint) {
   // Calculate 3D positions for the start and end points
   Vector3 startCartesian3D =
-      getSpherePosition3D(connection.start, radius, rotationY, rotationZ);
+      getSpherePosition3D(connection.start, radius, rotationX, rotationY, rotationZ);
   Vector3 endCartesian3D =
-      getSpherePosition3D(connection.end, radius, rotationY, rotationZ);
+      getSpherePosition3D(connection.end, radius, rotationX, rotationY, rotationZ);
 
   // Project 3D positions to 2D canvas
   final center = Offset(size.width / 2, size.height / 2);

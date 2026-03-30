@@ -177,6 +177,7 @@ class GlobeForegroundRenderer {
   List<PointRenderData> calculatePointPositions({
     required List<Point> points,
     required double radius,
+    required double rotationX,
     required double rotationY,
     required double rotationZ,
     required Size canvasSize,
@@ -202,21 +203,23 @@ class GlobeForegroundRenderer {
       final cartesian3D = getSpherePosition3D(
         point.coordinates,
         radius,
+        rotationX,
         rotationY,
         rotationZ,
       );
 
-      // Project to 2D
+      // Project to 2D — after rotation, shader's camera faces +z direction.
+      // Screen x maps to rotated.x (negated for shader's horizontal flip), screen y to rotated.y.
       final position2D = Offset(
-        center.dx + cartesian3D.y,
-        center.dy - cartesian3D.z,
+        center.dx - cartesian3D.x,
+        center.dy - cartesian3D.y,
       );
 
-      // Visibility check (front-facing)
-      final isVisible = cartesian3D.x > 0;
+      // Visibility check — point faces camera when z > 0
+      final isVisible = cartesian3D.z > 0;
 
       // Depth calculation for scaling (normalized 0-1)
-      final depth = isVisible ? (cartesian3D.x / radius).clamp(0.0, 1.0) : 0.0;
+      final depth = isVisible ? (cartesian3D.z / radius).clamp(0.0, 1.0) : 0.0;
 
       // Calculate surface normal (normalized cartesian3D is the surface normal)
       // This gives us the direction the surface is facing
@@ -252,6 +255,7 @@ class GlobeForegroundRenderer {
   List<ArcRenderData> calculateConnectionPositions({
     required List<AnimatedPointConnection> connections,
     required double radius,
+    required double rotationX,
     required double rotationY,
     required double rotationZ,
     required Size canvasSize,
@@ -308,9 +312,9 @@ class GlobeForegroundRenderer {
       // === Globe.GL Style Arc Calculation ===
       // Get 3D positions
       final startVec =
-          getSpherePosition3D(connection.start, radius, rotationY, rotationZ);
+          getSpherePosition3D(connection.start, radius, rotationX, rotationY, rotationZ);
       final endVec =
-          getSpherePosition3D(connection.end, radius, rotationY, rotationZ);
+          getSpherePosition3D(connection.end, radius, rotationX, rotationY, rotationZ);
 
       // Project to 2D
       final start2D = Offset(center.dx + startVec.y, center.dy - startVec.z);
@@ -447,6 +451,7 @@ class GlobeForegroundRenderer {
   List<SatelliteRenderData> calculateSatellitePositions({
     required List<Satellite> satellites,
     required double radius,
+    required double rotationX,
     required double rotationY,
     required double rotationZ,
     required Size canvasSize,
@@ -478,6 +483,7 @@ class GlobeForegroundRenderer {
       final cartesian3D = getSpherePosition3D(
         currentPosition,
         satelliteRadius,
+        rotationX,
         rotationY,
         rotationZ,
       );
@@ -540,6 +546,7 @@ class GlobeForegroundRenderer {
             final orbitCartesian = getSpherePosition3D(
               orbitPos,
               satelliteRadius,
+              rotationX,
               rotationY,
               rotationZ,
             );

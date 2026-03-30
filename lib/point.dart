@@ -39,6 +39,10 @@ class Point {
   /// A callback function that is called when the point is hovered over.
   final VoidCallback? onHover;
 
+  /// Optional pre-known size of the label widget, used to avoid a first-frame
+  /// placement jump caused by delayed size measurement.
+  final Size? labelSize;
+
   /// Creates a new instance of the [Point] class.
   ///
   /// The [coordinates] parameter represents the coordinates of the point on the globe.
@@ -84,6 +88,7 @@ class Point {
     this.labelTextStyle,
     this.onTap,
     this.onHover,
+    this.labelSize,
   });
 
   /// Creates a copy of the [Point] object with the specified properties overridden.
