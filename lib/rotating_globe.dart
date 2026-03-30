@@ -450,7 +450,7 @@ class RotatingGlobeState extends State<RotatingGlobe>
 
   /// Focus on the specified coordinates on the sphere.
   void focusOnCoordinates(GlobeCoordinates coordinates,
-      {required bool animate, required Duration? duration}) {
+      {required bool animate, required Duration? duration, VoidCallback? onComplete}) {
     double latRad = radians(coordinates.latitude);
     double lonRad = radians(-coordinates.longitude);
     final targetRotationZ = -lonRad;
@@ -476,6 +476,11 @@ class RotatingGlobeState extends State<RotatingGlobe>
           rotationZ = initialRotationZ + rZ * animationFactor;
 
           setState(() {});
+        })
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            onComplete?.call();
+          }
         })
         ..forward();
     } else {
@@ -1219,6 +1224,7 @@ class RotatingGlobeState extends State<RotatingGlobe>
     _pointRenderData = _foregroundRenderer.calculatePointPositions(
       points: widget.controller.points,
       radius: convertedRadius(),
+      rotationX: rotationX,
       rotationY: rotationY,
       rotationZ: rotationZ,
       canvasSize: canvasSize,
@@ -1229,6 +1235,7 @@ class RotatingGlobeState extends State<RotatingGlobe>
     _arcRenderData = _foregroundRenderer.calculateConnectionPositions(
       connections: widget.controller.connections,
       radius: convertedRadius(),
+      rotationX: rotationX,
       rotationY: rotationY,
       rotationZ: rotationZ,
       canvasSize: canvasSize,
@@ -1239,6 +1246,7 @@ class RotatingGlobeState extends State<RotatingGlobe>
     _satelliteRenderData = _foregroundRenderer.calculateSatellitePositions(
       satellites: widget.controller.satellites,
       radius: convertedRadius(),
+      rotationX: rotationX,
       rotationY: rotationY,
       rotationZ: rotationZ,
       canvasSize: canvasSize,
@@ -1249,11 +1257,16 @@ class RotatingGlobeState extends State<RotatingGlobe>
     for (final pointData in _pointRenderData) {
       if (pointData.isVisible) {
         if (!visiblePoints.containsKey(pointData.id)) {
+          // Find the Point to get its pre-supplied labelSize if available
+          final matchingPoint = widget.controller.points
+              .where((p) => p.id == pointData.id)
+              .firstOrNull;
           visiblePoints.putIfAbsent(
             pointData.id,
             () => VisiblePoint(
               key: GlobalKey(),
               id: pointData.id,
+              size: matchingPoint?.labelSize,
               position: pointData.position2D,
               isVisible: true,
               isHovering: false,
@@ -1660,8 +1673,16 @@ class RotatingGlobeState extends State<RotatingGlobe>
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
+    return LayoutBuilder(builder: (context, layoutConstraints) {
+      return _buildInner(context, layoutConstraints);
+    });
+  }
+
+  Widget _buildInner(BuildContext context, BoxConstraints layoutConstraints) {
+    // Use actual widget constraints instead of full-screen MediaQuery dimensions,
+    // so the globe and its point markers share the same coordinate space.
+    double screenWidth = layoutConstraints.maxWidth;
+    double screenHeight = layoutConstraints.maxHeight;
 
     double maxWidth = screenWidth;
     double maxHeight = screenHeight;

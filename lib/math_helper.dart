@@ -27,22 +27,27 @@ double radiansToDegrees(double radians) {
 /// [rotationY] and [rotationZ] are rotation angles around the Y and Z axes, respectively.
 /// Returns a [Vector3] representing the 3D position of the point on the sphere.
 Vector3 getSpherePosition3D(GlobeCoordinates coordinates, double radius,
-    double rotationY, double rotationZ) {
-  // radius += 10;
+    double rotationX, double rotationY, double rotationZ) {
   // Convert latitude and longitude to radians
   double lat = degreesToRadians(coordinates.latitude);
   double lon = degreesToRadians(coordinates.longitude);
 
-  // Convert spherical coordinates (lat, lon, radius) to Cartesian coordinates (x, y, z)
+  // Convert spherical coordinates to Cartesian — x=forward, y=right, z=up
   Vector3 cartesian = Vector3(radius * cos(lat) * cos(lon),
       radius * cos(lat) * sin(lon), radius * sin(lat));
 
-  // Create rotation matrices for X, Y, and Z axes
-  Matrix3 rotationMatrixY = Matrix3.rotationY(-rotationY);
-  Matrix3 rotationMatrixZ = Matrix3.rotationZ(-rotationZ);
+  // The shader applies: combined = rotZ(rotZ+π/2) * rotX(π/2-rotX) to screen-space sphere points.
+  // Inverse: (rotZ*rotX)⁻¹ = rotX⁻¹*rotZ⁻¹ = rotX(rotX-π/2) * rotZ(-rotZ-π/2)
+  // Apply rotZ(-rotZ-π/2) first, then rotX(rotX-π/2).
+  // In matrix multiplication: rXinv.multiplied(rZinv) applies rZinv first, then rXinv.
+  const halfPi = pi / 2;
+  Matrix3 rXinv = Matrix3.rotationX(rotationX - halfPi);
+  Matrix3 rZinv = Matrix3.rotationZ(-rotationZ - halfPi);
 
-  // Apply the rotations
-  return rotationMatrixY.multiplied(rotationMatrixZ).transform(cartesian);
+  Vector3 rotated = rXinv.multiplied(rZinv).transform(cartesian);
+
+
+  return rotated;
 }
 
 /// Converts the 2D offset to spherical coordinates.

@@ -425,9 +425,10 @@ class FlutterEarthGlobeController extends ChangeNotifier {
   /// ```
   void focusOnCoordinates(GlobeCoordinates coordinates,
       {bool animate = false,
-      Duration? duration = const Duration(milliseconds: 500)}) {
+      Duration? duration = const Duration(milliseconds: 500),
+      VoidCallback? onComplete}) {
     globeKey.currentState
-        ?.focusOnCoordinates(coordinates, animate: animate, duration: duration);
+        ?.focusOnCoordinates(coordinates, animate: animate, duration: duration, onComplete: onComplete);
   }
 
   /// Updates the [connection] between two [points] on the globe.
